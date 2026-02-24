@@ -88,6 +88,8 @@ async def init_db():
 
 async def seed_live_battle_example():
     """Seed the Live Battle Example prompt if it doesn't exist."""
+    if os.getenv("SKIP_SEED"):
+        return
     import uuid
     from datetime import datetime, timezone
 

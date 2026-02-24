@@ -1,4 +1,4 @@
-#!/Users/suminbyun_home/Desktop/Spring2026/MIT_MAS.664/Mojify/backend/venv/bin/python3
+#!/Users/cesia/Documents/MAS.664/Mojify/backend/venv/bin/python3.13
 # -*- coding: utf-8 -*-
 import re
 import sys

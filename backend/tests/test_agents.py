@@ -17,6 +17,8 @@ def test_register_agent(client):
     assert "api_key" in data
     assert len(data["api_key"]) == 64  # 32 bytes hex
     assert "created_at" in data
+    assert "claim_url" in data
+    assert "skill_md" in data
 
 
 def test_register_agent_duplicate_name(client):

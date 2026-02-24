@@ -12,6 +12,7 @@ _test_db_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 TEST_DB_PATH = _test_db_file.name
 _test_db_file.close()
 os.environ["DATABASE_URL"] = TEST_DB_PATH
+os.environ["SKIP_SEED"] = "1"  # Skip seed so tests start with empty DB
 
 
 async def clear_db():

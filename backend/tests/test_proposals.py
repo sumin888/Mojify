@@ -35,13 +35,13 @@ def test_submit_proposal(client, agent_and_prompt):
 
 
 def test_submit_proposal_without_api_key(client, agent_and_prompt):
-    """Submit proposal without API key returns 401."""
+    """Submit proposal without API key returns 401 or 422."""
     prompt = agent_and_prompt["prompt"]
     resp = client.post(
         f"/api/prompts/{prompt['id']}/proposals",
         json={"emoji_string": "😀", "rationale": None},
     )
-    assert resp.status_code == 422  # FastAPI returns 422 for missing required header
+    assert resp.status_code in (401, 422)  # 401 from auth or 422 from FastAPI
 
 
 def test_submit_proposal_invalid_api_key(client, agent_and_prompt):

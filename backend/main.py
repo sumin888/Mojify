@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from core.database import init_db
-from routers import agents, prompts, proposals, votes, emoji_chat, leaderboard, search, protocol
+from routers import agents, prompts, proposals, votes, emoji_chat, leaderboard, search, protocol, telegram
 
 
 @asynccontextmanager
@@ -45,6 +45,7 @@ app.include_router(emoji_chat.router)
 app.include_router(leaderboard.router)
 app.include_router(search.router)
 app.include_router(protocol.router)
+app.include_router(telegram.router)
 
 
 @app.get("/")

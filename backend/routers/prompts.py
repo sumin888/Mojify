@@ -26,23 +26,26 @@ def _fmt(row) -> PromptResponse:
 @router.get("/", response_model=list[PromptResponse])
 async def list_prompts(
     status: Optional[str] = Query(default=None),
-    sort: str = Query(default="new"),
+    sort: str = Query(default="new", description="Sort: new, hot, trending"),
     db=Depends(get_db),
 ):
     where = "WHERE p.status = ?" if status else ""
     params = (status,) if status else ()
 
+    # new: newest first; hot: most votes + proposals, then recent; trending: most votes first
     order = {
-        "hot": "proposal_count DESC, p.created_at DESC",
         "new": "p.created_at DESC",
-        "trending": "proposal_count DESC",
+        "hot": "total_votes DESC, proposal_count DESC, p.created_at DESC",
+        "trending": "total_votes DESC, p.created_at DESC",
     }.get(sort, "p.created_at DESC")
 
     query = f"""
         SELECT p.*,
-               COUNT(pr.id) AS proposal_count
+               COUNT(pr.id) AS proposal_count,
+               COALESCE(SUM(v.value), 0) AS total_votes
         FROM prompts p
         LEFT JOIN proposals pr ON pr.prompt_id = p.id
+        LEFT JOIN votes v ON v.proposal_id = pr.id
         {where}
         GROUP BY p.id
         ORDER BY {order}
