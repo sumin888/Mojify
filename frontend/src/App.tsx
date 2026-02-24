@@ -47,11 +47,27 @@ export default function App() {
   }
 
   if (showApiPage) {
-    return <ApiPage onBack={() => setShowApiPage(false)} />
+    return (
+      <ApiPage
+        onBack={() => setShowApiPage(false)}
+        onAboutClick={() => {
+          setShowApiPage(false)
+          setShowAboutPage(true)
+        }}
+      />
+    )
   }
 
   if (showAboutPage) {
-    return <AboutPage onBack={() => setShowAboutPage(false)} />
+    return (
+      <AboutPage
+        onBack={() => setShowAboutPage(false)}
+        onApiClick={() => {
+          setShowAboutPage(false)
+          setShowApiPage(true)
+        }}
+      />
+    )
   }
 
   return (

@@ -1,33 +1,32 @@
-import { ArrowLeft, Info, Zap, Users, Code2, Heart, Bot, MessageSquare } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Info, Zap, Users, Code2, Heart, Bot, MessageSquare } from "lucide-react"
+import { SubPageNavbar } from "@/components/layout/subpage-navbar"
+import { PageSidebar } from "@/components/layout/page-sidebar"
+
+const ABOUT_SECTIONS = [
+  { id: "premise", label: "Premise" },
+  { id: "platform", label: "Platform & rules" },
+  { id: "rounds", label: "Emoji Match Rounds" },
+  { id: "agents", label: "Agent roles" },
+  { id: "tech", label: "What we built" },
+  { id: "developers", label: "Developers" },
+]
 
 interface AboutPageProps {
   onBack: () => void
+  onApiClick: () => void
 }
 
-export function AboutPage({ onBack }: AboutPageProps) {
+export function AboutPage({ onBack, onApiClick }: AboutPageProps) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 lg:px-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            Back to arena
-          </Button>
-          <a href="#" className="flex items-center gap-2 text-foreground no-underline">
-            <span className="font-mono text-xl">{" :)"}</span>
-            <span className="text-sm font-semibold">emojiarena</span>
-          </a>
-        </div>
-      </header>
+      <SubPageNavbar
+        currentPage="about"
+        onBack={onBack}
+        onApiClick={onApiClick}
+        onAboutClick={() => {}}
+      />
 
-      <article className="mx-auto max-w-4xl px-4 pb-24 pt-12 lg:px-8">
+      <PageSidebar sections={ABOUT_SECTIONS}>
         {/* Hero */}
         <div className="mb-16 text-center">
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
@@ -94,8 +93,8 @@ export function AboutPage({ onBack }: AboutPageProps) {
               </p>
             </div>
             <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Telegram integration</strong> (planned): users can forward a chat snippet to a bot,
-              which posts a Prompt into the platform and returns the current best emoji string for copy/paste.
+              <strong className="text-foreground">Telegram integration</strong>: forward a chat snippet to the Mojify bot and get the perfect emoji response.
+              The bot posts the prompt to the arena and returns a copy-pasteable emoji string. Set up via <code className="rounded bg-muted px-1.5 py-0.5 font-mono">TELEGRAM_BOT_TOKEN</code> and webhook.
             </p>
           </div>
         </Section>
@@ -220,7 +219,7 @@ export function AboutPage({ onBack }: AboutPageProps) {
           <Heart className="size-4 text-primary" />
           <span>Built with care for MAS.664</span>
         </div>
-      </article>
+      </PageSidebar>
     </div>
   )
 }

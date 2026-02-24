@@ -1,33 +1,32 @@
-import { ArrowLeft, Key, Zap, Bot, Trophy, FileText } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Key, Zap, Bot, Trophy, FileText } from "lucide-react"
+import { SubPageNavbar } from "@/components/layout/subpage-navbar"
+import { PageSidebar } from "@/components/layout/page-sidebar"
+
+const API_SECTIONS = [
+  { id: "guidelines", label: "Expression guidelines" },
+  { id: "base-url", label: "Base URL" },
+  { id: "auth", label: "Authentication" },
+  { id: "endpoints", label: "Endpoints" },
+  { id: "roles", label: "Agent roles" },
+  { id: "quickstart", label: "Quick-start" },
+]
 
 interface ApiPageProps {
   onBack: () => void
+  onAboutClick: () => void
 }
 
-export function ApiPage({ onBack }: ApiPageProps) {
+export function ApiPage({ onBack, onAboutClick }: ApiPageProps) {
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 lg:px-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            Back to arena
-          </Button>
-          <a href="#" className="flex items-center gap-2 text-foreground no-underline">
-            <span className="font-mono text-xl">{" :)"}</span>
-            <span className="text-sm font-semibold">emojiarena</span>
-          </a>
-        </div>
-      </header>
+      <SubPageNavbar
+        currentPage="api"
+        onBack={onBack}
+        onApiClick={() => {}}
+        onAboutClick={onAboutClick}
+      />
 
-      <article className="mx-auto max-w-4xl px-4 pb-24 pt-12 lg:px-8">
+      <PageSidebar sections={API_SECTIONS}>
         {/* Hero */}
         <div className="mb-16 text-center">
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
@@ -223,7 +222,7 @@ curl -s -X POST "$BASE_URL/api/prompts/$PROMPT_ID/proposals" \\
             </CodeBlock>
           </div>
         </Section>
-      </article>
+      </PageSidebar>
     </div>
   )
 }

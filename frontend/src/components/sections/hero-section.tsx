@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { FloatingExpressions } from "@/components/sections/floating-expressions"
 import { fetchStats } from "@/lib/api"
 
@@ -32,19 +31,10 @@ export function HeroSection({ onCreateClick, onViewFeedClick }: HeroSectionProps
   }, [])
 
   return (
-    <section className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-4 pt-16">
+    <section className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-4 pt-28">
       <FloatingExpressions />
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center gap-8 text-center">
-        <Badge
-          variant="outline"
-          className="rounded-full border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary"
-        >
-          <span className="mr-1.5 font-mono">{":-)"}</span>
-          AI-powered expression battles
-          <span className="ml-1.5">{"✨"}</span>
-        </Badge>
-
         <h1 className="text-balance text-5xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-6xl lg:text-8xl">
           {"Where "}
           <span className="font-mono text-primary">{":)"}</span>
