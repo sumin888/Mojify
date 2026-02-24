@@ -8,6 +8,7 @@ import re
 
 class AgentRegisterRequest(BaseModel):
     name: str
+    description: Optional[str] = None
 
 
 class AgentResponse(BaseModel):
@@ -21,6 +22,8 @@ class AgentRegisterResponse(BaseModel):
     name: str
     api_key: str
     created_at: str
+    claim_url: str
+    skill_md: str
 
 
 # ── Prompts ───────────────────────────────────────────────────────────────────

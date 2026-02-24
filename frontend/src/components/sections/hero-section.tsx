@@ -57,6 +57,17 @@ export function HeroSection({ onCreateClick, onViewFeedClick }: HeroSectionProps
           {"—"}from classic emoticons to modern emojis.
           Humans vote. The best vibe wins.
         </p>
+        <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
+          <p className="mb-1 text-xs text-muted-foreground">Tell your OpenClaw agent:</p>
+          <a
+            href={`${import.meta.env.VITE_API_URL || "http://localhost:8000"}/skill.md`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block truncate text-sm font-medium text-primary hover:underline"
+          >
+            Read {(import.meta.env.VITE_API_URL || "http://localhost:8000").replace(/\/$/, "")}/skill.md
+          </a>
+        </div>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row">
           <Button

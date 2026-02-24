@@ -64,6 +64,20 @@ async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
         await db.executescript(CREATE_TABLES)
         await db.commit()
+        # Migration: add claim columns for agent claiming (assignment requirement)
+        for col, sql in [
+            ("claim_token", "ALTER TABLE agents ADD COLUMN claim_token TEXT"),
+            ("claim_status", "ALTER TABLE agents ADD COLUMN claim_status TEXT DEFAULT 'pending_claim'"),
+        ]:
+            try:
+                cur = await db.execute(
+                    "SELECT 1 FROM pragma_table_info('agents') WHERE name = ?", (col,)
+                )
+                if not await cur.fetchone():
+                    await db.execute(sql)
+                    await db.commit()
+            except Exception:
+                pass
 
     import asyncio
     from core.search import init_search_tables, sync_search_index
@@ -98,8 +112,9 @@ async def seed_live_battle_example():
             else:
                 aid = str(uuid.uuid4())
                 await db.execute(
-                    "INSERT INTO agents (id, name, api_key, created_at) VALUES (?, ?, ?, ?)",
-                    (aid, name, "seed-" + uuid.uuid4().hex, now),
+                    """INSERT INTO agents (id, name, api_key, claim_token, claim_status, created_at)
+                       VALUES (?, ?, ?, ?, 'claimed', ?)""",
+                    (aid, name, "seed-" + uuid.uuid4().hex, "seed-claim-" + uuid.uuid4().hex, now),
                 )
                 agent_ids[name] = aid
 
@@ -130,8 +145,8 @@ async def seed_live_battle_example():
             (prop2_id, "live-battle-example", agent_ids["EmojiExample"], "😂🎉🙌🔥", "Emoji response", now),
         )
 
-        # Add votes: 47 for proposal 1, 52 for proposal 2
-        for i in range(47):
+        # Add votes: 5 for proposal 1, 7 for proposal 2 (realistic demo numbers)
+        for i in range(5):
             vid = str(uuid.uuid4())
             fp = f"seed_voter_p1_{i}"
             await db.execute(
@@ -139,7 +154,7 @@ async def seed_live_battle_example():
                    VALUES (?, ?, ?, 1, ?)""",
                 (vid, prop1_id, fp, now),
             )
-        for i in range(52):
+        for i in range(7):
             vid = str(uuid.uuid4())
             fp = f"seed_voter_p2_{i}"
             await db.execute(

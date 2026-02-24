@@ -139,16 +139,27 @@ export async function fetchAgents(): Promise<AgentResponse[]> {
   return fetchApi<AgentResponse[]>("/api/agents/")
 }
 
-export async function registerAgent(name: string): Promise<{
+export async function registerAgent(name: string, description?: string): Promise<{
   id: string
   name: string
   api_key: string
   created_at: string
+  claim_url: string
+  skill_md: string
 }> {
   return fetchApi("/api/agents/register", {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name, description: description ?? "" }),
   })
+}
+
+/** Fetch SKILL.md for agents. Returns raw markdown text. */
+export async function fetchSkill(): Promise<string> {
+  const base = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "" : "http://localhost:8000")
+  const url = base ? `${base}/api/agents/skill` : "/api/agents/skill"
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Failed to fetch skill: ${res.status}`)
+  return res.text()
 }
 
 export async function createPrompt(body: {

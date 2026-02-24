@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react"
-import { X, Bot, Plus, Copy, Check, Loader2 } from "lucide-react"
+import { X, Bot, Plus, Copy, Check, Loader2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { fetchAgents, registerAgent, type AgentResponse } from "@/lib/api"
 
 interface AgentsDialogProps {
   open: boolean
   onClose: () => void
+  onAgentCreated?: () => void
 }
 
-export function AgentsDialog({ open, onClose }: AgentsDialogProps) {
+export function AgentsDialog({ open, onClose, onAgentCreated }: AgentsDialogProps) {
   const [agents, setAgents] = useState<AgentResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +17,14 @@ export function AgentsDialog({ open, onClose }: AgentsDialogProps) {
   const [registering, setRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
-  const [newlyRegistered, setNewlyRegistered] = useState<{ name: string; api_key: string } | null>(null)
+  const [copiedClaimUrl, setCopiedClaimUrl] = useState(false)
+  const [copiedSkill, setCopiedSkill] = useState(false)
+  const [newlyRegistered, setNewlyRegistered] = useState<{
+    name: string
+    api_key: string
+    claim_url: string
+    skill_md: string
+  } | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -41,9 +49,15 @@ export function AgentsDialog({ open, onClose }: AgentsDialogProps) {
     setRegisterError(null)
     try {
       const res = await registerAgent(name)
-      setNewlyRegistered({ name: res.name, api_key: res.api_key })
+      setNewlyRegistered({
+        name: res.name,
+        api_key: res.api_key,
+        claim_url: res.claim_url ?? "",
+        skill_md: res.skill_md ?? "",
+      })
       setNewName("")
       setAgents((prev) => [{ id: res.id, name: res.name, created_at: res.created_at }, ...prev])
+      onAgentCreated?.()
     } catch (e) {
       setRegisterError(e instanceof Error ? e.message : "Registration failed")
     } finally {
@@ -103,13 +117,36 @@ export function AgentsDialog({ open, onClose }: AgentsDialogProps) {
             </div>
             {registerError && <p className="mt-1 text-sm text-destructive">{registerError}</p>}
             {newlyRegistered && (
-              <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+              <div className="mt-3 space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
                 <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                   {newlyRegistered.name} registered!
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Copy your API key now — it won&apos;t be shown again:
+                <p className="text-xs text-muted-foreground">
+                  Copy your API key now — it won&apos;t be shown again. Send the claim link to your human:
                 </p>
+                {newlyRegistered.claim_url && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+                      {newlyRegistered.claim_url}
+                    </code>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(newlyRegistered.claim_url)
+                        setCopiedClaimUrl(true)
+                        setTimeout(() => setCopiedClaimUrl(false), 2000)
+                      }}
+                    >
+                      {copiedClaimUrl ? (
+                        <Check className="size-4 text-emerald-500" />
+                      ) : (
+                        <Copy className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
                 <div className="mt-2 flex items-center gap-2">
                   <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
                     {newlyRegistered.api_key}
@@ -127,6 +164,37 @@ export function AgentsDialog({ open, onClose }: AgentsDialogProps) {
                     )}
                   </Button>
                 </div>
+                {newlyRegistered.skill_md && (
+                  <div className="rounded border border-border/30 bg-background/50 p-2">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground">
+                      <FileText className="size-3.5" />
+                      Your agent received SKILL.md
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        navigator.clipboard.writeText(newlyRegistered.skill_md)
+                        setCopiedSkill(true)
+                        setTimeout(() => setCopiedSkill(false), 2000)
+                      }}
+                    >
+                      {copiedSkill ? (
+                        <>
+                          <Check className="size-3.5 text-emerald-500" />
+                          Copied to clipboard
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3.5" />
+                          Copy SKILL.md for your agent
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </form>

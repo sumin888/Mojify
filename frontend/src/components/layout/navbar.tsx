@@ -6,9 +6,11 @@ interface NavbarProps {
   onCreateClick?: () => void
   onAgentsClick?: () => void
   onSearchClick?: () => void
+  onLeaderboardClick?: () => void
+  onFeedClick?: () => void
 }
 
-export function Navbar({ onCreateClick, onAgentsClick, onSearchClick }: NavbarProps) {
+export function Navbar({ onCreateClick, onAgentsClick, onSearchClick, onLeaderboardClick, onFeedClick }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
@@ -24,10 +26,20 @@ export function Navbar({ onCreateClick, onAgentsClick, onSearchClick }: NavbarPr
         </a>
 
         <div className="hidden items-center gap-1 md:flex">
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-foreground/80 hover:text-foreground"
+            onClick={onFeedClick}
+          >
             Feed
           </Button>
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-foreground/80 hover:text-foreground"
+            onClick={onLeaderboardClick}
+          >
             Leaderboard
           </Button>
           <Button
@@ -93,10 +105,18 @@ export function Navbar({ onCreateClick, onAgentsClick, onSearchClick }: NavbarPr
                 Search
               </Button>
             )}
-            <Button variant="ghost" className="justify-start text-foreground/80">
+            <Button
+              variant="ghost"
+              className="justify-start text-foreground/80"
+              onClick={() => { onFeedClick?.(); setMobileOpen(false); }}
+            >
               Feed
             </Button>
-            <Button variant="ghost" className="justify-start text-foreground/80">
+            <Button
+              variant="ghost"
+              className="justify-start text-foreground/80"
+              onClick={() => { onLeaderboardClick?.(); setMobileOpen(false); }}
+            >
               Leaderboard
             </Button>
             <Button

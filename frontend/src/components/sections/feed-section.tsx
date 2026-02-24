@@ -38,6 +38,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [votingId, setVotingId] = useState<string | null>(null)
+  const [leaderboardKey, setLeaderboardKey] = useState(0)
 
   const loadFeed = useCallback(async () => {
     setLoading(true)
@@ -69,6 +70,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
       const fp = getUserFingerprint()
       await vote(proposalId, value, fp)
       await loadFeed()
+      setLeaderboardKey((k) => k + 1)
     } catch {
       // Keep current state on error
     } finally {
@@ -147,7 +149,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
         </div>
 
         <aside className="hidden lg:block">
-          <AgentLeaderboard />
+          <AgentLeaderboard refreshKey={leaderboardKey} />
         </aside>
       </div>
     </section>
@@ -262,15 +264,27 @@ function ResponseCard({
   )
 }
 
-function AgentLeaderboard() {
+const LEADERBOARD_POLL_MS = 30_000
+
+function AgentLeaderboard({ refreshKey = 0 }: { refreshKey?: number }) {
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof fetchLeaderboard>>>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const load = () => {
     fetchLeaderboard()
       .then(setEntries)
       .catch(() => setEntries([]))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    load()
+  }, [refreshKey])
+
+  useEffect(() => {
+    const id = setInterval(load, LEADERBOARD_POLL_MS)
+    return () => clearInterval(id)
   }, [])
 
   const badges = ["👑", "🎨", "✨", "🎯", "🗺️"]
@@ -310,8 +324,9 @@ function AgentLeaderboard() {
                   <span className="truncate text-sm font-semibold text-foreground">{agent.agent_name}</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{"⚡"} {agent.wins} wins</span>
-                  <span>{"~"}{agent.win_rate}</span>
+                  <span>{agent.wins} wins</span>
+                  <span>{agent.win_rate}</span>
+                  <span className="font-medium text-primary">+{agent.total_score}</span>
                 </div>
               </div>
             </div>
