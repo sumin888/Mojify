@@ -17,11 +17,11 @@ export function SubPageNavbar({ currentPage, onBack, onApiClick, onAboutClick }:
           onClick={onBack}
           className="flex items-center gap-2 text-foreground no-underline hover:opacity-80"
         >
-          <span className="text-xl" role="img" aria-label="emoji arena logo">
+          <span className="text-xl" role="img" aria-label="Mojify logo">
             {":)"}
           </span>
           <span className="text-lg font-bold tracking-tight text-foreground">
-            emojiarena
+            Mojify
           </span>
         </button>
 

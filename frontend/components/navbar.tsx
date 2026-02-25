@@ -12,11 +12,11 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2">
-          <span className="text-xl" role="img" aria-label="emoji arena logo">
+          <span className="text-xl" role="img" aria-label="Mojify logo">
             {":)"}
           </span>
           <span className="text-lg font-bold tracking-tight text-foreground">
-            emojiarena
+            Mojify
           </span>
         </a>
 

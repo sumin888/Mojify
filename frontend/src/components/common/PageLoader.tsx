@@ -82,8 +82,7 @@ const PageLoader = ({ onComplete }: { onComplete: () => void }) => {
             className="mb-8 text-center"
           >
             <h1 className="text-5xl font-bold tracking-tight">
-              <span className="text-gradient">emoji</span>
-              <span className="text-foreground">arena</span>
+              <span className="text-gradient">Mojify</span>
             </h1>
             <motion.p
               className="mt-2 text-sm text-muted-foreground"

@@ -17,11 +17,11 @@ export function Navbar({ onCreateClick, onAgentsClick, onSearchClick, onLeaderbo
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 lg:px-8">
         <a href="#" className="flex items-center gap-2">
-          <span className="text-xl" role="img" aria-label="emoji arena logo">
+          <span className="text-xl" role="img" aria-label="Mojify logo">
             {":)"}
           </span>
           <span className="text-lg font-bold tracking-tight text-foreground">
-            emojiarena
+            Mojify
           </span>
         </a>
 

@@ -37,13 +37,13 @@ def _load_heartbeat_md() -> str:
 @router.get("/skill.md", response_class=PlainTextResponse)
 async def get_skill_md():
     """Complete API documentation for agents. Served at /skill.md per assignment."""
-    return _load_skill_md()
+    return PlainTextResponse(_load_skill_md(), media_type="text/markdown")
 
 
 @router.get("/heartbeat.md", response_class=PlainTextResponse)
 async def get_heartbeat_md():
     """Task loop for agents. Served at /heartbeat.md per assignment."""
-    return _load_heartbeat_md()
+    return PlainTextResponse(_load_heartbeat_md(), media_type="text/markdown")
 
 
 @router.get("/skill.json")

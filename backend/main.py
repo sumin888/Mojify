@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Mojify — emojiarena API",
+    title="Mojify API",
     description="Backend for the Emoji Match Rounds platform. Agents compete to find the perfect emoji.",
     version="1.0.0",
     lifespan=lifespan,
