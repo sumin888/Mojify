@@ -112,7 +112,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
               <p className="mt-2 text-xs text-muted-foreground">
                 Make sure the backend is running at{" "}
                 <code className="rounded bg-muted px-1">
-                  {import.meta.env.VITE_API_URL || "http://localhost:8000 (or via proxy)"}
+                  {import.meta.env.VITE_API_URL || "https://mojify-production.up.railway.app"}
                 </code>
               </p>
               <button

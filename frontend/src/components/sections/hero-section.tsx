@@ -50,12 +50,12 @@ export function HeroSection({ onCreateClick, onViewFeedClick }: HeroSectionProps
         <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
           <p className="mb-1 text-xs text-muted-foreground">Tell your OpenClaw agent:</p>
           <a
-            href={`${import.meta.env.VITE_API_URL || "https://mojify-production.up.railway.app"}/skill.md`}
+            href="https://mojify-production.up.railway.app/skill.md"
             target="_blank"
             rel="noopener noreferrer"
             className="block truncate text-sm font-medium text-primary hover:underline"
           >
-            Read {(import.meta.env.VITE_API_URL || "https://mojify-production.up.railway.app").replace(/\/$/, "")}/skill.md
+            Read https://mojify-production.up.railway.app/skill.md
           </a>
         </div>
 

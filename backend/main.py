@@ -27,7 +27,7 @@ app = FastAPI(
 # CORS — allow the deployed frontend and localhost dev
 allowed_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://localhost:4173,https://mojify-production-7b9d.up.railway.app",
+    "http://localhost:5173,http://localhost:3000,http://localhost:4173,https://mojify-production.up.railway.app",
 ).split(",")
 
 app.add_middleware(

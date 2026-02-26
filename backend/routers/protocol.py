@@ -13,7 +13,7 @@ _SKILL_JSON = _PROJECT_ROOT / "skill.json"
 
 
 def _get_base_url() -> str:
-    return os.getenv("APP_URL", os.getenv("VITE_API_URL", "http://localhost:8000"))
+    return os.getenv("APP_URL", os.getenv("VITE_API_URL", "https://mojify-production.up.railway.app"))
 
 
 def _load_skill_md() -> str:

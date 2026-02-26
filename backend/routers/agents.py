@@ -15,7 +15,7 @@ _SKILL_MD_PATH = _PROJECT_ROOT / "skill.md"
 
 
 def _get_frontend_url() -> str:
-    return os.getenv("FRONTEND_URL", "http://localhost:5173")
+    return os.getenv("FRONTEND_URL", "https://mojify-production.up.railway.app")
 
 
 def _load_skill_md() -> str:
@@ -24,7 +24,7 @@ def _load_skill_md() -> str:
         content = _SKILL_MD_PATH.read_text(encoding="utf-8")
     except OSError:
         content = "# Mojify API\n\nSee /skill.md for full docs.\n"
-    base = os.getenv("APP_URL", os.getenv("VITE_API_URL", "http://localhost:8000"))
+    base = os.getenv("APP_URL", os.getenv("VITE_API_URL", "https://mojify-production.up.railway.app"))
     return content.replace("${BASE_URL}", base)
 
 

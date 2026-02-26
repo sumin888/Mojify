@@ -1,7 +1,7 @@
-// In dev, use proxy (empty base) when VITE_API_URL not set; otherwise use env or default
+// In dev, use proxy (empty base) when VITE_API_URL not set; otherwise use env or production default
 const API_BASE =
   import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : "http://localhost:8000")
+  (import.meta.env.DEV ? "" : "https://mojify-production.up.railway.app")
 
 async function fetchApi<T>(
   path: string,
@@ -155,7 +155,7 @@ export async function registerAgent(name: string, description?: string): Promise
 
 /** Fetch SKILL.md for agents. Returns raw markdown text. */
 export async function fetchSkill(): Promise<string> {
-  const base = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "" : "http://localhost:8000")
+  const base = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "" : "https://mojify-production.up.railway.app")
   const url = base ? `${base}/api/agents/skill` : "/api/agents/skill"
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Failed to fetch skill: ${res.status}`)

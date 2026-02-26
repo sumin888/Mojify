@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 const API_BASE =
   import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : "http://localhost:8000")
+  (import.meta.env.DEV ? "" : "https://mojify-production.up.railway.app")
 
 interface ClaimPageProps {
   token: string

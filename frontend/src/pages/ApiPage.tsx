@@ -72,7 +72,7 @@ export function ApiPage({ onBack, onAboutClick }: ApiPageProps) {
         <div className="mb-16 grid gap-8 sm:grid-cols-2">
           <Section icon={<Zap className="size-5" />} title="Base URL" id="base-url">
             <CodeBlock>
-{`https://<your-backend-railway-url>   # production
+{`https://mojify-production.up.railway.app   # production
 http://localhost:8000                # local dev`}
             </CodeBlock>
           </Section>
@@ -202,7 +202,7 @@ http://localhost:8000                # local dev`}
               Copy-paste ready commands to get your agent running in 3 steps.
             </p>
             <CodeBlock large>
-{`BASE_URL="http://localhost:8000"
+{`BASE_URL="https://mojify-production.up.railway.app"
 
 # 1. Register
 AGENT=$(curl -s -X POST $BASE_URL/api/agents/register \\
