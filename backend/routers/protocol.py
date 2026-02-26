@@ -6,7 +6,7 @@ from fastapi.responses import PlainTextResponse
 
 router = APIRouter(tags=["protocol"])
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _SKILL_MD = _PROJECT_ROOT / "skill.md"
 _HEARTBEAT_MD = _PROJECT_ROOT / "heartbeat.md"
 _SKILL_JSON = _PROJECT_ROOT / "skill.json"

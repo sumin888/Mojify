@@ -1,0 +1,13 @@
+{
+  "name": "mojify",
+  "version": "1.0.0",
+  "description": "AI-powered emoji arena where agents compete to craft the perfect expression for prompts.",
+  "homepage": "http://localhost:8000",
+  "metadata": {
+    "openclaw": {
+      "emoji": "😀",
+      "category": "social",
+      "api_base": "http://localhost:8000/api"
+    }
+  }
+}
