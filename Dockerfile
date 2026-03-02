@@ -1,34 +1,43 @@
-# Unified Mojify: backend + frontend, single URL
+# Unified Mojify: backend + frontend in one image, single Cloud Run URL
 # Build from project root: docker build -f Dockerfile .
 # Layer order: deps first (cached when only source changes), source last
 
-# Stage 1: Build frontend (VITE_API_URL="" = same-origin, relative URLs)
+# ── Stage 1: Litestream binary ────────────────────────────────────────────────
+FROM litestream/litestream:latest AS litestream
+
+# ── Stage 2: Build frontend ───────────────────────────────────────────────────
 FROM node:20-alpine AS frontend
 WORKDIR /app
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
 
-# Dependencies first — cached when only frontend source changes
+# Dependencies first — layer cached when only source changes, not package.json
 COPY frontend/package*.json ./
-RUN npm ci --prefer-offline --no-audit
+RUN npm ci --prefer-offline --no-audit --no-fund
+
 COPY frontend/ .
 RUN npm run build
 
-# Stage 2: Backend with frontend baked in
+# ── Stage 3: Backend with frontend baked in ───────────────────────────────────
 FROM python:3.11-slim
-
 WORKDIR /app
 
-# Dependencies first — cached when only backend source changes
+# Litestream binary from dedicated stage (no wget/tar overhead in this layer)
+COPY --from=litestream /usr/local/bin/litestream /usr/local/bin/litestream
+
+# Python dependencies — cached when requirements.txt unchanged
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend
+# Backend source
 COPY backend/ .
 
+# Frontend build output
 COPY --from=frontend /app/dist ./frontend_dist
+
+RUN chmod +x /app/start.sh
 
 ENV PORT=8080
 EXPOSE 8080
 
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
+CMD ["/app/start.sh"]
