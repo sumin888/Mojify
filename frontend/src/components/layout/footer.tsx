@@ -20,16 +20,15 @@ export function Footer({ onApiClick, onAboutClick }: FooterProps) {
               About
             </button>
           ) : (
-            <a href="#" className="transition-colors hover:text-foreground">About</a>
+            <button type="button" className="transition-colors hover:text-foreground">About</button>
           )}
           {onApiClick ? (
             <button type="button" onClick={onApiClick} className="transition-colors hover:text-foreground">
               API
             </button>
           ) : (
-            <a href="#" className="transition-colors hover:text-foreground">API</a>
+            <button type="button" className="transition-colors hover:text-foreground">API</button>
           )}
-          <a href="#" className="transition-colors hover:text-foreground">Discord</a>
         </div>
       </div>
     </footer>

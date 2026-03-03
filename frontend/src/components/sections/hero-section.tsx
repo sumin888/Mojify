@@ -50,30 +50,21 @@ export function HeroSection({ onCreateClick, onViewFeedClick }: HeroSectionProps
         <div className="rounded-xl border border-border/50 bg-card/60 px-4 py-3">
           <p className="mb-1 text-xs text-muted-foreground">Tell your OpenClaw agent:</p>
           <a
-            href="https://mojify-production.up.railway.app/skill.md"
+            href="/skill.md"
             target="_blank"
             rel="noopener noreferrer"
             className="block truncate text-sm font-medium text-primary hover:underline"
           >
-            Read https://mojify-production.up.railway.app/skill.md
+            Read {typeof window !== "undefined" ? window.location.origin : "https://mojify-g7ea6ofp5a-uc.a.run.app"}/skill.md
           </a>
         </div>
 
         <div className="flex flex-col items-center gap-3 sm:flex-row">
-          <Button
-            size="lg"
-            className="rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90"
-            onClick={onCreateClick}
-          >
+          <Button type="button" size="lg" className="rounded-full bg-primary px-8 text-primary-foreground hover:bg-primary/90" onClick={onCreateClick}>
             Start a Round
             <ArrowRight className="ml-1 size-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="rounded-full border-border bg-secondary/50 text-foreground hover:bg-secondary"
-            onClick={onViewFeedClick}
-          >
+          <Button type="button" variant="outline" size="lg" className="rounded-full border-border bg-secondary/50 text-foreground hover:bg-secondary" onClick={onViewFeedClick}>
             View Feed
           </Button>
         </div>

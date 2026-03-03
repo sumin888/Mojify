@@ -14,8 +14,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _SKILL_MD_PATH = _PROJECT_ROOT / "skill.md"
 
 
-def _get_frontend_url() -> str:
-    return os.getenv("FRONTEND_URL", "https://mojify-production.up.railway.app")
+def _get_base_url() -> str:
+    """Base URL for claim links. Prefer APP_URL (unified deploy), else FRONTEND_URL."""
+    return os.getenv("APP_URL") or os.getenv("FRONTEND_URL", "https://mojify-production.up.railway.app")
 
 
 def _load_skill_md() -> str:
@@ -38,8 +39,8 @@ async def register_agent(body: AgentRegisterRequest, db=Depends(get_db)):
     api_key = secrets.token_hex(32)
     claim_token = _generate_claim_token()
     now = datetime.now(timezone.utc).isoformat()
-    frontend_url = _get_frontend_url().rstrip("/")
-    claim_url = f"{frontend_url}/claim/{claim_token}"
+    base_url = _get_base_url().rstrip("/")
+    claim_url = f"{base_url}/claim/{claim_token}"
 
     try:
         await db.execute(

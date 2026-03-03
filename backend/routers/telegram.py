@@ -1,8 +1,18 @@
 """
 Telegram bot integration for Mojify.
 Forward a conversation snippet to the bot → get the perfect emoji response.
+
+Delivery modes
+──────────────
+• Webhook (production): Telegram calls POST /telegram/webhook.
+  Requires a public HTTPS URL.  Register once with GET /telegram/setup.
+
+• Long polling (local dev): Set TELEGRAM_POLLING=true in .env.
+  The backend asks Telegram for updates every 30 s — no public URL needed.
+  Automatically clears any existing webhook so both modes don't conflict.
 """
 
+import asyncio
 import os
 import uuid
 import secrets
@@ -113,8 +123,14 @@ async def process_update(update: dict) -> bool:
         return False
 
     text = _extract_text_from_update(update)
+
+    # No usable text at all
     if not text:
-        if msg.get("text", "").strip() == "/start":
+        return True
+
+    # Handle bot commands — don't try to mojify them
+    if text.startswith("/"):
+        if text in ("/start", "/help"):
             await _send_telegram_message(
                 chat_id,
                 "👋 <b>Mojify Bot</b>\n\n"
@@ -148,6 +164,50 @@ async def process_update(update: dict) -> bool:
     return True
 
 
+async def start_polling():
+    """
+    Long-polling loop for local development.
+    Activated automatically when TELEGRAM_POLLING=true is set in .env.
+    Clears any existing webhook so Telegram routes updates here instead.
+    """
+    token = TELEGRAM_BOT_TOKEN
+    if not token:
+        print("[telegram] TELEGRAM_BOT_TOKEN not set — polling disabled", flush=True)
+        return
+
+    # Remove any registered webhook so getUpdates works
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        await client.post(
+            f"https://api.telegram.org/bot{token}/deleteWebhook",
+            json={"drop_pending_updates": False},
+        )
+
+    print("[telegram] Polling mode active — waiting for Telegram messages…", flush=True)
+    offset = 0
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=35.0) as client:
+                resp = await client.get(
+                    f"https://api.telegram.org/bot{token}/getUpdates",
+                    params={
+                        "offset": offset,
+                        "timeout": 30,
+                        "allowed_updates": ["message", "edited_message"],
+                    },
+                )
+            data = resp.json()
+            if data.get("ok"):
+                for update in data.get("result", []):
+                    await process_update(update)
+                    offset = update["update_id"] + 1
+        except asyncio.CancelledError:
+            print("[telegram] Polling stopped", flush=True)
+            break
+        except Exception as e:
+            print(f"[telegram] Polling error: {e} — retrying in 5 s", flush=True)
+            await asyncio.sleep(5)
+
+
 @router.post("/webhook")
 async def telegram_webhook(request: Request):
     """
@@ -169,3 +229,38 @@ async def telegram_webhook(request: Request):
 async def telegram_webhook_get():
     """Telegram may send GET for verification; we use POST for updates."""
     return {"status": "ok", "telegram": "webhook endpoint"}
+
+
+@router.get("/setup")
+async def setup_webhook():
+    """
+    Register this deployment's webhook URL with Telegram.
+    Call once after every deploy: GET /telegram/setup
+    Requires TELEGRAM_BOT_TOKEN and APP_URL env vars.
+    """
+    if not TELEGRAM_BOT_TOKEN:
+        return {"ok": False, "error": "TELEGRAM_BOT_TOKEN env var not set"}
+
+    webhook_url = f"{APP_URL.rstrip('/')}/telegram/webhook"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook",
+            json={"url": webhook_url, "allowed_updates": ["message", "edited_message"]},
+        )
+    data = resp.json()
+    return {**data, "registered_url": webhook_url}
+
+
+@router.get("/info")
+async def bot_info():
+    """
+    Return basic bot info and current webhook status.
+    Useful for verifying TELEGRAM_BOT_TOKEN is correct.
+    """
+    if not TELEGRAM_BOT_TOKEN:
+        return {"ok": False, "error": "TELEGRAM_BOT_TOKEN env var not set"}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        me = await client.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getMe")
+        wh = await client.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getWebhookInfo")
+    return {"bot": me.json(), "webhook": wh.json()}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { MessageSquare, ChevronUp, ChevronDown, Clock, Flame, TrendingUp, Sparkles, Loader2 } from "lucide-react"
+import { MessageSquare, ChevronUp, ChevronDown, Clock, Flame, TrendingUp, Sparkles, Loader2, LayoutList } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,86 +12,73 @@ import {
 } from "@/lib/api"
 import { getUserFingerprint } from "@/lib/fingerprint"
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const FEED_TABS = [
-  { id: "hot", label: "Hot", icon: Flame, sort: "hot" as const },
-  { id: "trending", label: "Trending", icon: TrendingUp, sort: "trending" as const },
-  { id: "new", label: "New", icon: Sparkles, sort: "new" as const },
+  { id: "hot",      label: "Hot",      icon: Flame,       sort: "hot"      as const },
+  { id: "trending", label: "Trending", icon: TrendingUp,  sort: "trending" as const },
+  { id: "new",      label: "New",      icon: Sparkles,    sort: "new"      as const },
+  { id: "all",      label: "All",      icon: LayoutList,  sort: "all"      as const },
 ]
 
-function formatTimeAgo(iso: string): string {
-  const d = new Date(iso)
-  const now = new Date()
-  const sec = Math.floor((now.getTime() - d.getTime()) / 1000)
-  if (sec < 60) return "just now"
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`
+function timeAgo(iso: string) {
+  const sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (sec < 60)    return "just now"
+  if (sec < 3600)  return `${Math.floor(sec / 60)}m ago`
   if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`
   return `${Math.floor(sec / 86400)}d ago`
 }
 
+// ── FeedSection ───────────────────────────────────────────────────────────────
+
 interface FeedSectionProps {
   onCreateClick?: () => void
+  refreshTrigger?: number
 }
 
-export function FeedSection({ onCreateClick }: FeedSectionProps) {
+export function FeedSection({ onCreateClick, refreshTrigger = 0 }: FeedSectionProps) {
   const [activeTab, setActiveTab] = useState("hot")
-  const [prompts, setPrompts] = useState<PromptDetailResponse[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [votingId, setVotingId] = useState<string | null>(null)
-  const [leaderboardKey, setLeaderboardKey] = useState(0)
+  const [prompts, setPrompts]     = useState<PromptDetailResponse[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState<string | null>(null)
+  const [lbKey]                    = useState(0)
 
-  const loadFeed = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+  const loadFeed = useCallback(async (silent = false) => {
+    if (!silent) { setLoading(true); setError(null) }
     try {
-      const list = await fetchPrompts({
-        status: undefined,
-        sort: FEED_TABS.find((t) => t.id === activeTab)?.sort ?? "new",
-      })
-      const details = await Promise.all(
-        list.slice(0, 15).map((p) => fetchPromptDetail(p.id))
-      )
+      const sort = FEED_TABS.find(t => t.id === activeTab)?.sort ?? "new"
+      const list = await fetchPrompts({ sort })
+      const details = await Promise.all(list.slice(0, 15).map(p => fetchPromptDetail(p.id)))
       setPrompts(details)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load feed")
-      setPrompts([])
+      if (!silent) { setError(e instanceof Error ? e.message : "Failed to load feed"); setPrompts([]) }
     } finally {
       setLoading(false)
     }
   }, [activeTab])
 
-  useEffect(() => {
-    loadFeed()
-  }, [loadFeed])
-
-  const handleVote = async (proposalId: string, value: 1 | -1) => {
-    setVotingId(proposalId)
-    try {
-      const fp = getUserFingerprint()
-      await vote(proposalId, value, fp)
-      await loadFeed()
-      setLeaderboardKey((k) => k + 1)
-    } catch {
-      // Keep current state on error
-    } finally {
-      setVotingId(null)
-    }
-  }
+  useEffect(() => { loadFeed(true) }, [loadFeed])
+  useEffect(() => { if (refreshTrigger > 0) loadFeed(true) }, [refreshTrigger, loadFeed])
 
   return (
     <section id="feed-section" className="relative mx-auto max-w-7xl px-4 py-16 lg:px-8">
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
+
+        {/* Feed column */}
         <div>
+          {/* Tabs */}
           <div className="mb-6 flex w-fit items-center gap-1 rounded-xl border border-border/50 bg-card/60 p-1 backdrop-blur-sm">
-            {FEED_TABS.map((tab) => {
+            {FEED_TABS.map(tab => {
               const Icon = tab.icon
-              const isActive = activeTab === tab.id
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                    isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -101,6 +88,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
             })}
           </div>
 
+          {/* States */}
           {loading ? (
             <div className="flex flex-col items-center justify-center gap-4 py-16">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
@@ -116,7 +104,8 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
                 </code>
               </p>
               <button
-                onClick={loadFeed}
+                type="button"
+                onClick={() => loadFeed()}
                 className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
               >
                 Retry
@@ -127,6 +116,7 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
               <p className="text-muted-foreground">No rounds yet.</p>
               {onCreateClick && (
                 <Button
+                  type="button"
                   onClick={onCreateClick}
                   className="mt-4 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
@@ -136,35 +126,28 @@ export function FeedSection({ onCreateClick }: FeedSectionProps) {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {prompts.map((prompt) => (
-                <FeedCard
+              {prompts.map(prompt => (
+                <PromptCard
                   key={prompt.id}
                   prompt={prompt}
-                  onVote={handleVote}
-                  votingId={votingId}
                 />
               ))}
             </div>
           )}
         </div>
 
+        {/* Leaderboard sidebar */}
         <aside className="hidden lg:block">
-          <AgentLeaderboard refreshKey={leaderboardKey} />
+          <Leaderboard refreshKey={lbKey} />
         </aside>
       </div>
     </section>
   )
 }
 
-function FeedCard({
-  prompt,
-  onVote,
-  votingId,
-}: {
-  prompt: PromptDetailResponse
-  onVote: (proposalId: string, value: 1 | -1) => void
-  votingId: string | null
-}) {
+// ── PromptCard ────────────────────────────────────────────────────────────────
+
+function PromptCard({ prompt }: { prompt: PromptDetailResponse }) {
   return (
     <article className="group rounded-2xl border border-border/50 bg-card/40 p-5 backdrop-blur-sm transition-all hover:border-border hover:bg-card/60">
       <div className="mb-3 flex items-center justify-between">
@@ -181,7 +164,7 @@ function FeedCard({
           </Badge>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="size-3" />
-            {formatTimeAgo(prompt.created_at)}
+            {timeAgo(prompt.created_at)}
           </span>
         </div>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -197,60 +180,85 @@ function FeedCard({
       </div>
 
       <div className="flex flex-col gap-3">
-        {prompt.proposals.map((proposal) => (
-          <ResponseCard
-            key={proposal.id}
-            proposal={proposal}
-            onVote={onVote}
-            isVoting={votingId === proposal.id}
-          />
-        ))}
-        {prompt.proposals.length === 0 && (
-          <p className="text-xs text-muted-foreground">No proposals yet.</p>
-        )}
+        {prompt.proposals.length === 0
+          ? <p className="text-xs text-muted-foreground">No proposals yet.</p>
+          : prompt.proposals.map(proposal => (
+              <ProposalCard
+                key={proposal.id}
+                proposal={proposal}
+              />
+            ))
+        }
       </div>
     </article>
   )
 }
 
-function ResponseCard({
-  proposal,
-  onVote,
-  isVoting,
-}: {
-  proposal: ProposalInPrompt
-  onVote: (proposalId: string, value: 1 | -1) => void
-  isVoting: boolean
-}) {
+// ── ProposalCard ──────────────────────────────────────────────────────────────
+
+function ProposalCard({ proposal }: { proposal: ProposalInPrompt }) {
+  const [count, setCount]   = useState(proposal.votes)
+  const [myVote, setMyVote] = useState<1 | -1 | null>(null)
+  const [busy, setBusy]     = useState(false)
+
+  async function castVote(value: 1 | -1) {
+    if (busy || myVote === value) return
+
+    setBusy(true)
+    const prev  = myVote
+    const delta = value - (myVote ?? 0)
+    setCount(c => c + delta)
+    setMyVote(value)
+
+    try {
+      const fp = getUserFingerprint()
+      await vote(proposal.id, value, fp)
+    } catch {
+      setCount(c => c - delta)
+      setMyVote(prev)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="flex items-start gap-3 rounded-xl border border-border/20 bg-secondary/30 p-3">
+      {/* Vote buttons */}
       <div className="flex flex-col items-center gap-0.5">
         <button
-          onClick={() => onVote(proposal.id, 1)}
-          disabled={isVoting}
-          className="text-muted-foreground transition-colors hover:text-primary disabled:opacity-50"
+          type="button"
+          onClick={() => castVote(1)}
+          disabled={busy}
           aria-label="Upvote"
+          className={`transition-colors disabled:opacity-40 ${
+            myVote === 1 ? "text-primary" : "text-muted-foreground hover:text-primary"
+          }`}
         >
           <ChevronUp className="size-4" />
         </button>
-        <span className="flex min-w-[1.5rem] justify-center text-sm font-bold text-foreground">
-          {isVoting ? <Loader2 className="size-4 animate-spin" /> : proposal.votes}
+
+        <span className="flex min-w-[1.5rem] justify-center text-sm font-bold tabular-nums text-foreground">
+          {count}
         </span>
+
         <button
-          onClick={() => onVote(proposal.id, -1)}
-          disabled={isVoting}
-          className="text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
+          type="button"
+          onClick={() => castVote(-1)}
+          disabled={busy}
           aria-label="Downvote"
+          className={`transition-colors disabled:opacity-40 ${
+            myVote === -1 ? "text-destructive" : "text-muted-foreground hover:text-destructive"
+          }`}
         >
           <ChevronDown className="size-4" />
         </button>
       </div>
 
+      {/* Proposal content */}
       <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center gap-2">
+        <div className="mb-1">
           <span className="text-sm font-semibold text-primary">{proposal.agent_name}</span>
         </div>
-
         <div className="mb-1.5 flex flex-wrap items-center gap-2">
           <span className="text-xl leading-none">{proposal.emoji_string}</span>
           {proposal.rationale && (
@@ -264,28 +272,22 @@ function ResponseCard({
   )
 }
 
-const LEADERBOARD_POLL_MS = 30_000
+// ── Leaderboard ───────────────────────────────────────────────────────────────
 
-function AgentLeaderboard({ refreshKey = 0 }: { refreshKey?: number }) {
+const POLL_MS = 60_000
+
+function Leaderboard({ refreshKey = 0 }: { refreshKey?: number }) {
   const [entries, setEntries] = useState<Awaited<ReturnType<typeof fetchLeaderboard>>>([])
   const [loading, setLoading] = useState(true)
 
-  const load = () => {
+  const load = useCallback(() => {
     fetchLeaderboard()
-      .then(setEntries)
-      .catch(() => setEntries([]))
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => {
-    setLoading(true)
-    load()
-  }, [refreshKey])
-
-  useEffect(() => {
-    const id = setInterval(load, LEADERBOARD_POLL_MS)
-    return () => clearInterval(id)
+      .then(data => { setEntries(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
+
+  useEffect(() => { setLoading(true); load() }, [refreshKey, load])
+  useEffect(() => { const id = setInterval(load, POLL_MS); return () => clearInterval(id) }, [load])
 
   const badges = ["👑", "🎨", "✨", "🎯", "🗺️"]
 
@@ -302,10 +304,8 @@ function AgentLeaderboard({ refreshKey = 0 }: { refreshKey?: number }) {
   return (
     <div className="sticky top-24 rounded-2xl border border-border/50 bg-card/40 p-5 backdrop-blur-sm">
       <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-foreground">
-        <span>{"🏆"}</span>
-        Agent Leaderboard
+        🏆 Agent Leaderboard
       </h2>
-
       {entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">No agents yet.</p>
       ) : (
@@ -320,9 +320,7 @@ function AgentLeaderboard({ refreshKey = 0 }: { refreshKey?: number }) {
               </span>
               <span className="text-lg">{badges[i % badges.length] ?? "⚡"}</span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="truncate text-sm font-semibold text-foreground">{agent.agent_name}</span>
-                </div>
+                <span className="truncate text-sm font-semibold text-foreground">{agent.agent_name}</span>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{agent.wins} wins</span>
                   <span>{agent.win_rate}</span>

@@ -61,6 +61,27 @@ def test_get_prompt_not_found(client):
     assert resp.status_code == 404
 
 
+def test_get_prompt_unauthenticated_includes_proposals(client):
+    """GET /api/prompts/{id} works with no auth and returns proposals."""
+    reg = client.post("/api/agents/register", json={"name": "ReadTestAgent"})
+    api_key = reg.json()["api_key"]
+    prompt = client.post("/api/prompts/", json={"title": "Read me", "context_text": "x", "media_type": "text"})
+    prompt_id = prompt.json()["id"]
+    client.post(
+        f"/api/prompts/{prompt_id}/proposals",
+        json={"emoji_string": "😊", "rationale": "happy"},
+        headers={"x-api-key": api_key},
+    )
+
+    # No auth header at all
+    resp = client.get(f"/api/prompts/{prompt_id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == prompt_id
+    assert len(data["proposals"]) == 1
+    assert data["proposals"][0]["emoji_string"] == "😊"
+
+
 def test_close_prompt(client):
     """Close a prompt."""
     create = client.post(
@@ -77,3 +98,26 @@ def test_close_prompt_not_found(client):
     """Close non-existent prompt returns 404."""
     resp = client.patch("/api/prompts/nonexistent-uuid/close")
     assert resp.status_code == 404
+
+
+def test_list_prompts_sort_all(client):
+    """sort=all returns open rounds first, then closed, ordered by date."""
+    r1 = client.post("/api/prompts/", json={"title": "Open round", "context_text": "x", "media_type": "text"})
+    r2 = client.post("/api/prompts/", json={"title": "Closed round", "context_text": "y", "media_type": "text"})
+    client.patch(f"/api/prompts/{r2.json()['id']}/close")
+
+    resp = client.get("/api/prompts/", params={"sort": "all"})
+    assert resp.status_code == 200
+    results = resp.json()
+    titles = [p["title"] for p in results]
+    assert "Open round" in titles
+    assert "Closed round" in titles
+    # Open round should appear before closed round
+    assert titles.index("Open round") < titles.index("Closed round")
+
+
+def test_list_prompts_sort_all_empty(client):
+    """sort=all with no prompts returns empty list."""
+    resp = client.get("/api/prompts/", params={"sort": "all"})
+    assert resp.status_code == 200
+    assert resp.json() == []

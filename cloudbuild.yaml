@@ -1,0 +1,116 @@
+# Google Cloud Build — deploy unified Mojify (backend + frontend, single URL)
+# Run: gcloud builds submit --config=cloudbuild.yaml
+#
+# Speed optimisations:
+#   - E2_HIGHCPU_8: 8 vCPUs
+#   - .dockerignore: skips venv/, node_modules/, .git/, __pycache__, *.db
+#   - --cache-from latest: reuses unchanged dep layers
+#   - Litestream via pre-built image stage (no wget/tar)
+#   - Both tags pushed in parallel
+#   - deploy + set-url merged into one step
+#   - --max-instances=1 (SQLite/Litestream single-writer safety)
+#
+# Data persistence:
+#   - SQLite is replicated to GCS via Litestream on every write
+#   - On cold start, start.sh restores the DB from GCS before uvicorn starts
+#   - The setup-bucket step below creates the bucket + grants IAM automatically
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: mojify
+  _IMAGE: mojify
+  _GCS_BUCKET: mojify-db
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+
+steps:
+  # ── Run in parallel with the Docker build ─────────────────────────────────
+
+  # Create GCS bucket + grant Cloud Run's service account write access.
+  # Idempotent — safe to run on every deploy. Runs in parallel with Docker work.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        # Create bucket if it doesn't exist (ignore "already exists" error)
+        gsutil mb -p $PROJECT_ID -l ${_REGION} gs://${_GCS_BUCKET} 2>/dev/null || true
+
+        # Enable uniform bucket-level access (best practice)
+        gsutil uniformbucketlevelaccess set on gs://${_GCS_BUCKET} 2>/dev/null || true
+
+        # Grant Cloud Run's default compute service account objectAdmin on the bucket
+        PROJECT_NUMBER=$$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+        SA="$${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+        gsutil iam ch serviceAccount:$${SA}:roles/storage.objectAdmin gs://${_GCS_BUCKET}
+
+        echo "Bucket gs://${_GCS_BUCKET} ready. Service account $${SA} has objectAdmin."
+    id: setup-bucket
+
+  # Pull previous image for Docker layer cache (harmless on first build)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: bash
+    args: ['-c', 'docker pull gcr.io/$PROJECT_ID/${_IMAGE}:latest || true']
+    id: pull-cache
+
+  # ── Docker build (waits for cache pull) ───────────────────────────────────
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - 'gcr.io/$PROJECT_ID/${_IMAGE}:$BUILD_ID'
+      - -t
+      - 'gcr.io/$PROJECT_ID/${_IMAGE}:latest'
+      - --cache-from
+      - 'gcr.io/$PROJECT_ID/${_IMAGE}:latest'
+      - .
+    id: build
+    waitFor: [pull-cache]
+
+  # Push both tags in parallel so next build's cache-from always finds :latest
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker push gcr.io/$PROJECT_ID/${_IMAGE}:$BUILD_ID &
+        docker push gcr.io/$PROJECT_ID/${_IMAGE}:latest &
+        wait
+    id: push
+    waitFor: [build]
+
+  # ── Deploy (waits for push AND bucket setup) ──────────────────────────────
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run deploy ${_SERVICE} \
+          --image=gcr.io/$PROJECT_ID/${_IMAGE}:$BUILD_ID \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --max-instances=1 \
+          --update-env-vars=DATABASE_URL=/app/mojify.db,LITESTREAM_GCS_BUCKET=${_GCS_BUCKET} \
+          --quiet
+
+        URL=$(gcloud run services describe ${_SERVICE} \
+          --region=${_REGION} \
+          --format='value(status.url)')
+
+        gcloud run services update ${_SERVICE} \
+          --region=${_REGION} \
+          --update-env-vars=APP_URL=$$URL,FRONTEND_URL=$$URL \
+          --quiet
+
+        echo "Deployed: $$URL"
+    id: deploy
+    waitFor: [push, setup-bucket]
+
+images:
+  - 'gcr.io/$PROJECT_ID/${_IMAGE}:$BUILD_ID'
+  - 'gcr.io/$PROJECT_ID/${_IMAGE}:latest'

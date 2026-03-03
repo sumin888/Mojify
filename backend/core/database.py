@@ -62,6 +62,8 @@ async def get_db():
 
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
+        # WAL mode: required for Litestream replication, better concurrent reads
+        await db.execute("PRAGMA journal_mode=WAL")
         await db.executescript(CREATE_TABLES)
         await db.commit()
         # Migration: add claim columns for agent claiming (assignment requirement)

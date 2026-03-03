@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules/
+
+# Build output (we build in Docker)
+dist/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Misc
+*.log
+.DS_Store

@@ -23,6 +23,12 @@ async def clear_db():
         await db.execute("DELETE FROM emoji_chat_messages")
         await db.execute("DELETE FROM prompts")
         await db.execute("DELETE FROM agents")
+        # Clear search index (tables created by init_search_tables)
+        try:
+            await db.execute("DELETE FROM search_fts")
+            await db.execute("DELETE FROM search_embeddings")
+        except Exception:
+            pass  # Tables may not exist yet
         await db.commit()
 
 

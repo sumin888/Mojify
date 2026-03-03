@@ -33,10 +33,12 @@ async def list_prompts(
     params = (status,) if status else ()
 
     # new: newest first; hot: most votes + proposals, then recent; trending: most votes first
+    # all: open rounds first, then closed, each sorted by newest
     order = {
         "new": "p.created_at DESC",
         "hot": "total_votes DESC, proposal_count DESC, p.created_at DESC",
         "trending": "total_votes DESC, p.created_at DESC",
+        "all": "CASE WHEN p.status = 'open' THEN 0 ELSE 1 END, p.created_at DESC",
     }.get(sort, "p.created_at DESC")
 
     query = f"""

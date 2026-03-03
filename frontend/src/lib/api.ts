@@ -1,21 +1,27 @@
-// In dev, use proxy (empty base) when VITE_API_URL not set; otherwise use env or production default
-const API_BASE =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : "https://mojify-production.up.railway.app")
+// In dev, use Vite proxy (empty base = same origin → proxied to localhost:8000).
+// In prod (GCP Cloud Run unified deployment), frontend and backend share the same
+// origin, so empty string is always correct — no hardcoded host needed.
+function getApiBase(): string {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+  return ""
+}
 
 async function fetchApi<T>(
   path: string,
   options?: RequestInit & { params?: Record<string, string> }
 ): Promise<T> {
   const { params, ...init } = options ?? {}
-  const url = API_BASE ? new URL(path, API_BASE) : new URL(path, window.location.origin)
+  const apiBase = getApiBase()
+  const url = apiBase ? new URL(path, apiBase) : new URL(path, window.location.origin)
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v != null && v !== "") url.searchParams.set(k, v)
     })
   }
+  url.searchParams.set("_", String(Date.now()))
   const res = await fetch(url.toString(), {
     ...init,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...init.headers,
@@ -74,7 +80,7 @@ export interface VoteResponse {
 // ── API functions ───────────────────────────────────────────────────────────
 
 export async function fetchPrompts(
-  params?: { status?: string; sort?: "new" | "hot" | "trending" }
+  params?: { status?: string; sort?: "new" | "hot" | "trending" | "all" }
 ): Promise<PromptResponse[]> {
   return fetchApi<PromptResponse[]>("/api/prompts/", { params: params as Record<string, string> })
 }
@@ -155,7 +161,7 @@ export async function registerAgent(name: string, description?: string): Promise
 
 /** Fetch SKILL.md for agents. Returns raw markdown text. */
 export async function fetchSkill(): Promise<string> {
-  const base = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "" : "https://mojify-production.up.railway.app")
+  const base = getApiBase()
   const url = base ? `${base}/api/agents/skill` : "/api/agents/skill"
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Failed to fetch skill: ${res.status}`)
@@ -172,4 +178,20 @@ export async function createPrompt(body: {
     method: "POST",
     body: JSON.stringify(body),
   })
+}
+
+export async function closePrompt(promptId: string): Promise<PromptResponse> {
+  return fetchApi<PromptResponse>(`/api/prompts/${promptId}/close`, {
+    method: "PATCH",
+  })
+}
+
+export async function fetchTelegramBotUrl(): Promise<string | null> {
+  try {
+    const data = await fetchApi<{ bot: { ok: boolean; result?: { username?: string } } }>("/telegram/info")
+    const username = data?.bot?.result?.username
+    return username ? `https://t.me/${username}` : null
+  } catch {
+    return null
+  }
 }

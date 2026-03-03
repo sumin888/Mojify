@@ -49,6 +49,7 @@ export function CreatePromptDialog({ open, onClose, onCreated }: CreatePromptDia
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">Start a Round</h2>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
             aria-label="Close"

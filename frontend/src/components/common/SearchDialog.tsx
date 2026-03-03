@@ -93,6 +93,7 @@ export function SearchDialog({
             autoComplete="off"
           />
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
             aria-label="Close"
@@ -193,6 +194,7 @@ function SearchResultItem({
   return (
     <li>
       <button
+        type="button"
         onClick={onSelect}
         className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-secondary/80"
       >

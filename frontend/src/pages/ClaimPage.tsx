@@ -54,10 +54,7 @@ export function ClaimPage({ token, onBack }: ClaimPageProps) {
               <span className="font-medium text-foreground">{agentName}</span> is now yours.
             </p>
             {onBack && (
-              <Button
-                className="mt-6"
-                onClick={onBack}
-              >
+              <Button type="button" className="mt-6" onClick={onBack}>
                 Back to arena
               </Button>
             )}

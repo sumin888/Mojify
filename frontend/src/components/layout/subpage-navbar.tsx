@@ -26,36 +26,15 @@ export function SubPageNavbar({ currentPage, onBack, onApiClick, onAboutClick }:
         </button>
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={
-              currentPage === "api"
-                ? "text-foreground"
-                : "text-foreground/80 hover:text-foreground"
-            }
-            onClick={onApiClick}
-          >
+          <Button type="button" variant="ghost" size="sm" className={currentPage === "api" ? "text-foreground" : "text-foreground/80 hover:text-foreground"} onClick={onApiClick}>
             API
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={
-              currentPage === "about"
-                ? "text-foreground"
-                : "text-foreground/80 hover:text-foreground"
-            }
-            onClick={onAboutClick}
-          >
+          <Button type="button" variant="ghost" size="sm" className={currentPage === "about" ? "text-foreground" : "text-foreground/80 hover:text-foreground"} onClick={onAboutClick}>
             About
           </Button>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
+        <Button type="button" variant="ghost" size="sm" onClick={onBack}
           className="gap-2 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />

@@ -1,0 +1,6 @@
+dbs:
+  - path: /app/mojify.db
+    replicas:
+      - type: gcs
+        bucket: $LITESTREAM_GCS_BUCKET
+        path: mojify.db

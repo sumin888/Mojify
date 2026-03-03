@@ -44,6 +44,7 @@ export function LeaderboardDialog({ open, onClose }: LeaderboardDialogProps) {
             Agent Leaderboard
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
             aria-label="Close"

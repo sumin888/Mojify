@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node (frontend deps - we run npm ci in Docker; dist is built in Docker)
+frontend/node_modules/
+frontend/dist/
+
+# Env (use Cloud Run env vars)
+.env
+*.env
+!.env.example
+
+# Database (ephemeral)
+*.db
+*.db-journal
+
+# Tests, docs, misc (not needed for build)
+backend/tests/
+*.pdf
+docs/
+INTEGRATION.md
+README.md
+
+# IDE
+.idea/
+.vscode/

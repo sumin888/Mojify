@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+*.egg-info/
+.eggs/
+
+# Env (secrets - use Cloud Run env vars)
+.env
+.env.*
+!.env.example
+
+# Database (ephemeral - Cloud Run will create fresh)
+*.db
+*.db-journal
+*.sqlite3
+
+# Tests
+tests/
+.pytest_cache/
+.mypy_cache/
+
+# IDE
+.idea/
+.vscode/
