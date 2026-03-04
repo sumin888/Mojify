@@ -2,15 +2,14 @@ import asyncio
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
-import aiosqlite
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, FileResponse
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from core.database import init_db, DB_PATH
+from core.database import init_db, get_db
 from routers import agents, prompts, proposals, votes, emoji_chat, leaderboard, search, protocol, telegram, admin
 
 _FRONTEND_DIST = Path(__file__).resolve().parent / "frontend_dist"
@@ -87,32 +86,28 @@ async def health():
 
 
 @app.get("/api/debug/votes")
-async def debug_votes(limit: int = 20):
+async def debug_votes(limit: int = 20, db=Depends(get_db)):
     """Debug: return recent votes (verify votes are persisted). No proposal_id needed."""
-    async with aiosqlite.connect(DB_PATH) as db:
-        db.row_factory = aiosqlite.Row
-        cur = await db.execute(
-            """SELECT v.proposal_id, v.user_fingerprint, v.value, v.created_at,
-                      COALESCE((SELECT SUM(value) FROM votes WHERE proposal_id = v.proposal_id), 0) AS net_votes
-               FROM votes v ORDER BY v.created_at DESC LIMIT ?""",
-            (limit,),
-        )
-        rows = await cur.fetchall()
-        return {"votes": [dict(r) for r in rows]}
+    cur = await db.execute(
+        """SELECT v.proposal_id, v.user_fingerprint, v.value, v.created_at,
+                  COALESCE((SELECT SUM(value) FROM votes WHERE proposal_id = v.proposal_id), 0) AS net_votes
+           FROM votes v ORDER BY v.created_at DESC LIMIT ?""",
+        (limit,),
+    )
+    rows = await cur.fetchall()
+    return {"votes": [dict(r) for r in rows]}
 
 
 @app.get("/api/stats")
-async def get_stats():
+async def get_stats(db=Depends(get_db)):
     """Dashboard stats: rounds, agents, voters."""
-    stats = {"rounds": 0, "agents": 0, "voters": 0}
-    async with aiosqlite.connect(DB_PATH) as db:
-        cur = await db.execute("SELECT COUNT(*) FROM prompts")
-        stats["rounds"] = (await cur.fetchone())[0]
-        cur = await db.execute("SELECT COUNT(*) FROM agents")
-        stats["agents"] = (await cur.fetchone())[0]
-        cur = await db.execute("SELECT COUNT(DISTINCT user_fingerprint) FROM votes")
-        stats["voters"] = (await cur.fetchone())[0]
-    return stats
+    cur = await db.execute("SELECT COUNT(*) FROM prompts")
+    rounds = (await cur.fetchone())[0]
+    cur = await db.execute("SELECT COUNT(*) FROM agents")
+    agents = (await cur.fetchone())[0]
+    cur = await db.execute("SELECT COUNT(DISTINCT user_fingerprint) FROM votes")
+    voters = (await cur.fetchone())[0]
+    return {"rounds": rounds, "agents": agents, "voters": voters}
 
 
 # SPA catch-all: serve frontend for non-API paths (must be last)

@@ -46,7 +46,7 @@ async def get_leaderboard(db=Depends(get_db)):
                 GROUP BY proposal_id
             ) v_sum ON v_sum.proposal_id = pr2.id
             GROUP BY prompt_id
-            HAVING max_votes > 0
+            HAVING MAX(COALESCE(v_sum.net, 0)) > 0
         ) winners ON winners.prompt_id = pr.prompt_id
         LEFT JOIN (
             SELECT proposal_id, SUM(value) AS net

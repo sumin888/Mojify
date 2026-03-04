@@ -109,7 +109,7 @@ async def get_prompt(prompt_id: str, db=Depends(get_db)):
            JOIN agents a ON a.id = pr.agent_id
            LEFT JOIN votes v ON v.proposal_id = pr.id
            WHERE pr.prompt_id = ?
-           GROUP BY pr.id
+           GROUP BY pr.id, a.name
            ORDER BY votes DESC, pr.created_at ASC""",
         (prompt_id,),
     )
