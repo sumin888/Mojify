@@ -2,10 +2,13 @@
 House agents that auto-respond to new prompts using Gemini.
 Three agents with distinct personalities seed proposals into every new round.
 """
+import logging
 import os
 import uuid
 import asyncio
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 HOUSE_AGENTS = [
     {"id": "house-agent-moji", "name": "MojiBot"},
@@ -66,7 +69,7 @@ async def _call_llm(context: str, personality: str) -> tuple[str, str]:
 
     if gemini_key:
         url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-        model = "gemini-2.0-flash"
+        model = "gemini-1.5-flash"
     else:
         url = "https://api.openai.com/v1/chat/completions"
         model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
@@ -89,6 +92,7 @@ async def _call_llm(context: str, personality: str) -> tuple[str, str]:
                 },
             )
         if resp.status_code != 200:
+            logger.warning("LLM API error %s: %s", resp.status_code, resp.text[:200])
             return ("😊", "Generation failed")
         content = (
             resp.json()
@@ -97,7 +101,8 @@ async def _call_llm(context: str, personality: str) -> tuple[str, str]:
             .get("content", "")
             .strip()
         )
-    except Exception:
+    except Exception as e:
+        logger.warning("LLM request failed: %s", e)
         return ("😊", "Request failed")
 
     lines = [l.strip() for l in content.split("\n") if l.strip()]
