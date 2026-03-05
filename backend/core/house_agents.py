@@ -74,7 +74,7 @@ async def _call_llm(context: str, personality: str) -> tuple[str, str]:
         async with httpx.AsyncClient(timeout=20.0) as client:
             if gemini_key:
                 resp = await client.post(
-                    f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={gemini_key}",
+                    f"https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite:generateContent?key={gemini_key}",
                     json={
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {"maxOutputTokens": 60, "temperature": 0.85},
@@ -131,7 +131,7 @@ async def submit_house_proposals(prompt_id: str, context_text: str, title: str) 
     pool = await get_pool()
 
     for i, agent in enumerate(HOUSE_AGENTS):
-        await asyncio.sleep(i * 3)  # stagger so proposals trickle in
+        await asyncio.sleep(i * 5)  # stagger so proposals trickle in
         try:
             personality = _PERSONALITIES[agent["id"]]
             context = f"Title: {title}\n\n{context_text}"
