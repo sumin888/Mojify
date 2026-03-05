@@ -74,7 +74,7 @@ async def _call_llm(context: str, personality: str) -> tuple[str, str]:
         async with httpx.AsyncClient(timeout=20.0) as client:
             if gemini_key:
                 resp = await client.post(
-                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
+                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={gemini_key}",
                     json={
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {"maxOutputTokens": 60, "temperature": 0.85},
