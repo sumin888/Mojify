@@ -1,1 +1,2 @@
-providers = ["python", "node"]
+# Unused when Railway backend service root dir = "/" (repo root).
+# Active config: repo root nixpacks.toml.

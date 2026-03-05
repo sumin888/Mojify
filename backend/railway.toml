@@ -1,7 +1,2 @@
-[build]
-builder = "nixpacks"
-buildCommand = "cd ../frontend && npm install && npm run build && cp -r dist ../backend/frontend_dist"
-
-[deploy]
-startCommand = "python start.py"
-healthcheckPath = "/health"
+# Unused when Railway backend service root dir = "/" (repo root).
+# Active config: repo root railway.toml + nixpacks.toml.
